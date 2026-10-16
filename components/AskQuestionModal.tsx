@@ -202,8 +202,8 @@ export default function AskQuestionModal({ isOpen, onClose, onQuestionCreated }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      setError('Please provide a title and detailed question text.');
+    if (!title.trim()) {
+      setError('Please provide a question title.');
       return;
     }
 
@@ -462,16 +462,18 @@ export default function AskQuestionModal({ isOpen, onClose, onQuestionCreated }:
             />
           </div>
 
-          {/* Question Body */}
+          {/* Question Body / Description (Optional) */}
           <div className="form-group">
-            <label className="form-label">Detailed Explanation & Requirements</label>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Description / Additional Details</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>Optional</span>
+            </label>
             <textarea
               className="form-textarea"
-              placeholder="Describe what you are trying to solve, equations or steps you have already tried..."
+              placeholder="Add optional details, context, equations, or steps you have already tried..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={5}
-              required
+              rows={4}
             />
           </div>
 

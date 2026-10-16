@@ -517,16 +517,18 @@ export default function QuestionViewerModal({
                       {question.title}
                     </h2>
 
-                    {/* Question Content */}
-                    <div style={{ 
-                      fontSize: '15px', 
-                      lineHeight: 1.7, 
-                      color: 'var(--text-primary)', 
-                      whiteSpace: 'pre-wrap',
-                      marginBottom: '20px'
-                    }}>
-                      {question.content}
-                    </div>
+                    {/* Question Content (if provided) */}
+                    {question.content && question.content.trim() ? (
+                      <div style={{ 
+                        fontSize: '15px', 
+                        lineHeight: 1.7, 
+                        color: 'var(--text-primary)', 
+                        whiteSpace: 'pre-wrap',
+                        marginBottom: '20px'
+                      }}>
+                        {question.content}
+                      </div>
+                    ) : null}
 
                     {/* Photo Attachment */}
                     {question.image_url && (

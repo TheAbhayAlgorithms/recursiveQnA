@@ -111,24 +111,26 @@ export default function QuestionCard({
           {question.title}
         </h3>
 
-        <p 
-          className="card-question-content"
-          onClick={() => handleOpenViewer('question')}
-          style={{ 
-            fontSize: '14px', 
-            color: 'var(--text-secondary)', 
-            lineHeight: 1.55,
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            cursor: 'pointer',
-            wordBreak: 'break-word',
-            overflowWrap: 'anywhere'
-          }}
-        >
-          {question.content}
-        </p>
+        {question.content && question.content.trim() ? (
+          <p 
+            className="card-question-content"
+            onClick={() => handleOpenViewer('question')}
+            style={{ 
+              fontSize: '14px', 
+              color: 'var(--text-secondary)', 
+              lineHeight: 1.55,
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              cursor: 'pointer',
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere'
+            }}
+          >
+            {question.content}
+          </p>
+        ) : null}
       </div>
 
       {/* Media Badges / Previews if present */}

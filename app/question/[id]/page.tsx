@@ -265,16 +265,18 @@ export default function QuestionDetailPage() {
               </div>
             </div>
 
-            {/* Detailed Question Body */}
-            <div style={{ 
-              fontSize: '16px', 
-              lineHeight: 1.7, 
-              color: 'var(--text-primary)',
-              whiteSpace: 'pre-wrap',
-              marginBottom: '20px'
-            }}>
-              {question.content}
-            </div>
+            {/* Detailed Question Body (if provided) */}
+            {question.content && question.content.trim() ? (
+              <div style={{ 
+                fontSize: '16px', 
+                lineHeight: 1.7, 
+                color: 'var(--text-primary)',
+                whiteSpace: 'pre-wrap',
+                marginBottom: '20px'
+              }}>
+                {question.content}
+              </div>
+            ) : null}
 
             {/* Attached Photo */}
             {question.image_url && (

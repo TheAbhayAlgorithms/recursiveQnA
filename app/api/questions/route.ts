@@ -84,13 +84,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Question title must be at least 5 characters long' }, { status: 400 });
     }
 
-    if (!content || content.trim().length < 10) {
-      return NextResponse.json({ error: 'Please provide more details in the question explanation' }, { status: 400 });
-    }
-
     const questionId = 'q_' + crypto.randomUUID();
     const now = Date.now();
     const cleanField = field && field.trim().length > 0 ? field.trim() : 'General';
+    const cleanContent = typeof content === 'string' ? content.trim() : '';
 
     await db.prepare(`
       INSERT INTO questions (id, user_id, user_name, title, content, field, image_url, video_url, created_at)
@@ -100,7 +97,7 @@ export async function POST(request: Request) {
       user.id,
       user.name,
       title.trim(),
-      content.trim(),
+      cleanContent,
       cleanField,
       imageUrl || null,
       videoUrl || null,
