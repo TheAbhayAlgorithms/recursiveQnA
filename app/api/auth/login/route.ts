@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const cleanUserId = userId.trim().toLowerCase();
     const cleanPassword = typeof password === 'string' ? password.trim() : '';
 
-    let user = (await db.prepare('SELECT * FROM users WHERE LOWER(id) = ?').get(cleanUserId)) as {
+    let user = (await db.prepare('SELECT * FROM users WHERE LOWER(id) = ? OR LOWER(email) = ?').get(cleanUserId, cleanUserId)) as {
       id: string;
       name: string;
       password_hash: string;

@@ -553,7 +553,7 @@ function LoginFormContent() {
             {showPasswordLogin && (
               <form onSubmit={handleAdminPasswordLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" htmlFor="admin-userid">Admin Username</label>
+                  <label className="form-label" htmlFor="admin-userid">Admin Username or Email</label>
                   <div style={{ position: 'relative' }}>
                     <UserIcon size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                     <input
