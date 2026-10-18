@@ -418,6 +418,37 @@ export default function QuestionDetailPage() {
                             <span>VERIFIED SOLUTION</span>
                           </div>
                         )}
+
+                        {/* Author-only AI Verification Badge */}
+                        {user?.id === sol.user_id && sol.ai_verdict && (
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            borderRadius: 'var(--radius-full)',
+                            background: sol.ai_verdict === 'correct' ? 'var(--color-success-bg)' : sol.ai_verdict === 'incorrect' ? 'var(--color-danger-bg)' : 'var(--bg-subtle)',
+                            color: sol.ai_verdict === 'correct' ? 'var(--color-success)' : sol.ai_verdict === 'incorrect' ? 'var(--color-danger)' : 'var(--text-muted)',
+                            border: `1px solid ${sol.ai_verdict === 'correct' ? 'rgba(5, 150, 105, 0.3)' : sol.ai_verdict === 'incorrect' ? 'rgba(220, 38, 38, 0.3)' : 'var(--border-light)'}`,
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            marginLeft: '6px'
+                          }}>
+                            {sol.ai_verdict === 'correct' ? (
+                              <>
+                                <CheckCircle2 size={13} />
+                                <span>Correct (AI-checked)</span>
+                              </>
+                            ) : sol.ai_verdict === 'incorrect' ? (
+                              <>
+                                <AlertCircle size={13} />
+                                <span>Incorrect (AI-checked)</span>
+                              </>
+                            ) : (
+                              <span>AI-checked: Unsure</span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Solution Controls */}

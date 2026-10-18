@@ -229,7 +229,7 @@ export default function LeaderboardDashboard({
       {/* ========================================================
           2. LOGGED-IN SCHOLAR STANDING CARD
           ======================================================== */}
-      {currentUser && (
+      {currentUser && currentUser.id !== 'admin' && !currentUser.name?.toLowerCase().includes('administrator') && (
         <section className="app-container" style={{ marginTop: '24px' }}>
           <div className="my-standing-card">
             <div className="my-standing-info">

@@ -23,13 +23,14 @@ export async function GET(request: Request) {
     const fieldsRows = await db.prepare(`SELECT DISTINCT field FROM questions ORDER BY field ASC`).all();
     const availableFields = fieldsRows.map((r: any) => r.field).filter(Boolean);
 
-    // 2. Fetch all users
+    // 2. Fetch all competing scholar users (excluding admin administrator)
     const users = await db.prepare(`
       SELECT id, name, role, field_of_interest, created_at
       FROM users
+      WHERE id != 'admin' AND LOWER(name) NOT LIKE '%administrator%'
     `).all();
 
-    // 3. Fetch solutions joined with questions
+    // 3. Fetch solutions joined with questions (excluding admin administrator)
     let solQuery = `
       SELECT 
         s.id,
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
         q.field as question_field
       FROM solutions s
       LEFT JOIN questions q ON s.question_id = q.id
-      WHERE 1=1
+      WHERE s.user_id != 'admin' AND LOWER(s.user_name) NOT LIKE '%administrator%'
     `;
     const solParams: any[] = [];
 

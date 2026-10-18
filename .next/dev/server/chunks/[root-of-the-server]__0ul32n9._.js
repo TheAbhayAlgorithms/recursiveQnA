@@ -537,12 +537,24 @@ function initDb() {
       last_requested_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS answer_verifications (
+      id TEXT PRIMARY KEY,
+      answer_id TEXT NOT NULL UNIQUE,
+      user_id TEXT NOT NULL,
+      verdict TEXT NOT NULL CHECK (verdict IN ('correct', 'incorrect', 'unsure')),
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY(answer_id) REFERENCES solutions(id) ON DELETE CASCADE,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_questions_field ON questions(field, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_solutions_qid ON solutions(question_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_thoughts_qid ON thoughts(question_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_thoughts_sid ON thoughts(solution_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_otps_email ON otps(email);
     CREATE INDEX IF NOT EXISTS idx_otps_expires ON otps(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_verifications_aid ON answer_verifications(answer_id);
+    CREATE INDEX IF NOT EXISTS idx_verifications_uid ON answer_verifications(user_id);
   `);
     try {
         sqlite.exec(`ALTER TABLE thoughts ADD COLUMN solution_id TEXT;`);

@@ -45,12 +45,29 @@ export async function GET(
       ORDER BY t.created_at ASC
     `).all(id)) as any[];
 
+    // Privacy enforcement: AI verification verdict is strictly private to the solution's author
+    const currentUser = await getCurrentUser();
+    const authorVerdictsMap = new Map<string, string>();
+    if (currentUser) {
+      const verRows = (await db.prepare(`
+        SELECT answer_id, verdict 
+        FROM answer_verifications 
+        WHERE user_id = ?
+      `).all(currentUser.id)) as any[];
+      for (const row of verRows) {
+        authorVerdictsMap.set(row.answer_id, row.verdict);
+      }
+    }
+
     const solutions = rawSolutions.map((sol, index) => {
       const comments = rawThoughts.filter(t => 
         t.solution_id === sol.id || (!t.solution_id && index === 0)
       );
+      // Only include ai_verdict if the viewer is the author of this specific solution
+      const isAuthor = currentUser && currentUser.id === sol.user_id;
       return {
         ...sol,
+        ai_verdict: isAuthor ? (authorVerdictsMap.get(sol.id) || null) : null,
         comments,
         comments_count: comments.length,
       };

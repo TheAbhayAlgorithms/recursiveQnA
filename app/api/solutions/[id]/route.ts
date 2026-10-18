@@ -82,3 +82,53 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update solution' }, { status: 500 });
   }
 }
+
+// PUT: Author updates their solution on resubmission
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const { content, imageUrl, videoUrl } = await request.json();
+
+    const solution = (await db.prepare('SELECT id, user_id FROM solutions WHERE id = ?').get(id)) as any;
+    if (!solution) {
+      return NextResponse.json({ error: 'Solution not found' }, { status: 404 });
+    }
+
+    if (solution.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden: You can only edit your own solutions' }, { status: 403 });
+    }
+
+    if (!content || content.trim().length === 0) {
+      return NextResponse.json({ error: 'Solution content cannot be empty' }, { status: 400 });
+    }
+
+    if (content.trim().length > 4000) {
+      return NextResponse.json({ error: 'Solution exceeds 4000 characters maximum length' }, { status: 400 });
+    }
+
+    await db.prepare(`
+      UPDATE solutions
+      SET content = ?, image_url = ?, video_url = ?
+      WHERE id = ?
+    `).run(content.trim(), imageUrl || null, videoUrl || null, id);
+
+    const updated = await db.prepare('SELECT * FROM solutions WHERE id = ?').get(id);
+
+    return NextResponse.json({
+      success: true,
+      solution: updated,
+    });
+  } catch (err) {
+    console.error('Update solution error:', err);
+    return NextResponse.json({ error: 'Failed to update solution' }, { status: 500 });
+  }
+}
+

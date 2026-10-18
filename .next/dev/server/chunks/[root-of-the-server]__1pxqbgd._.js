@@ -174,10 +174,26 @@ async function GET(request, { params }) {
       WHERE t.question_id = ?
       ORDER BY t.created_at ASC
     `).all(id);
+        // Privacy enforcement: AI verification verdict is strictly private to the solution's author
+        const currentUser = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$auth$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getCurrentUser"])();
+        const authorVerdictsMap = new Map();
+        if (currentUser) {
+            const verRows = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].prepare(`
+        SELECT answer_id, verdict 
+        FROM answer_verifications 
+        WHERE user_id = ?
+      `).all(currentUser.id);
+            for (const row of verRows){
+                authorVerdictsMap.set(row.answer_id, row.verdict);
+            }
+        }
         const solutions = rawSolutions.map((sol, index)=>{
             const comments = rawThoughts.filter((t)=>t.solution_id === sol.id || !t.solution_id && index === 0);
+            // Only include ai_verdict if the viewer is the author of this specific solution
+            const isAuthor = currentUser && currentUser.id === sol.user_id;
             return {
                 ...sol,
+                ai_verdict: isAuthor ? authorVerdictsMap.get(sol.id) || null : null,
                 comments,
                 comments_count: comments.length
             };
@@ -527,12 +543,24 @@ function initDb() {
       last_requested_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS answer_verifications (
+      id TEXT PRIMARY KEY,
+      answer_id TEXT NOT NULL UNIQUE,
+      user_id TEXT NOT NULL,
+      verdict TEXT NOT NULL CHECK (verdict IN ('correct', 'incorrect', 'unsure')),
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY(answer_id) REFERENCES solutions(id) ON DELETE CASCADE,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_questions_field ON questions(field, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_solutions_qid ON solutions(question_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_thoughts_qid ON thoughts(question_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_thoughts_sid ON thoughts(solution_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_otps_email ON otps(email);
     CREATE INDEX IF NOT EXISTS idx_otps_expires ON otps(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_verifications_aid ON answer_verifications(answer_id);
+    CREATE INDEX IF NOT EXISTS idx_verifications_uid ON answer_verifications(user_id);
   `);
     try {
         sqlite.exec(`ALTER TABLE thoughts ADD COLUMN solution_id TEXT;`);
