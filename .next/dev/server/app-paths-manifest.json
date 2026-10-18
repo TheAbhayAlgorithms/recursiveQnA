@@ -1,4 +1,6 @@
 {
-  "/api/auth/send-otp/route": "app/api/auth/send-otp/route.js",
-  "/login/page": "app/login/page.js"
+  "/api/leaderboard/route": "app/api/leaderboard/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/leaderboard/page": "app/leaderboard/page.js",
+  "/page": "app/page.js"
 }

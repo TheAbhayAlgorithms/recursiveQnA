@@ -221,20 +221,14 @@ async function POST(request) {
                 status: 400
             });
         }
-        if (!content || content.trim().length < 10) {
-            return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                error: 'Please provide more details in the question explanation'
-            }, {
-                status: 400
-            });
-        }
         const questionId = 'q_' + __TURBOPACK__imported__module__$5b$externals$5d2f$crypto__$5b$external$5d$__$28$crypto$2c$__cjs$29$__["default"].randomUUID();
         const now = Date.now();
         const cleanField = field && field.trim().length > 0 ? field.trim() : 'General';
+        const cleanContent = typeof content === 'string' ? content.trim() : '';
         await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].prepare(`
       INSERT INTO questions (id, user_id, user_name, title, content, field, image_url, video_url, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(questionId, user.id, user.name, title.trim(), content.trim(), cleanField, imageUrl || null, videoUrl || null, now);
+    `).run(questionId, user.id, user.name, title.trim(), cleanContent, cleanField, imageUrl || null, videoUrl || null, now);
         const created = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].prepare('SELECT * FROM questions WHERE id = ?').get(questionId);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             success: true,
@@ -258,6 +252,8 @@ __turbopack_context__.s([
     ()=>clearAuthCookies,
     "getCurrentUser",
     ()=>getCurrentUser,
+    "getPublicOrigin",
+    ()=>getPublicOrigin,
     "requireAuth",
     ()=>requireAuth,
     "setAuthCookies",
@@ -351,6 +347,30 @@ function clearAuthCookies(response) {
     };
     response.cookies.set('rqna_token', '', clearOptions);
     response.cookies.set('edu_token', '', clearOptions);
+}
+function getPublicOrigin(request) {
+    // 1. Explicit app URL if set in env
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || process.env.SITE_URL;
+    if (envUrl) return envUrl.replace(/\/$/, '');
+    // 2. Vercel deployment URL
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+        return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    }
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`;
+    }
+    // 3. Proxy headers (X-Forwarded-Host / X-Forwarded-Proto)
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    if (forwardedHost) {
+        return `${forwardedProto}://${forwardedHost}`;
+    }
+    // 4. Fallback to request URL origin
+    try {
+        return new URL(request.url).origin;
+    } catch  {
+        return 'http://localhost:3000';
+    }
 }
 }),
 "[project]/lib/db.ts [app-route] (ecmascript)", ((__turbopack_context__) => {

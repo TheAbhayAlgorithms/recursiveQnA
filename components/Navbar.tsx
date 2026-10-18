@@ -13,7 +13,8 @@ import {
   BookOpen,
   ChevronDown,
   Mail,
-  Phone
+  Phone,
+  Trophy
 } from 'lucide-react';
 
 interface User {
@@ -98,6 +99,18 @@ export default function Navbar({ user, onOpenAskModal, onLogout }: NavbarProps) 
               <span className="nav-btn-full">Ask Question</span>
               <span className="nav-btn-compact">Ask</span>
             </button>
+
+            {/* Leaderboard CTA */}
+            <Link 
+              href="/leaderboard"
+              className="btn btn-secondary nav-leaderboard-btn"
+              title="Solutions Leaderboard"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Trophy size={16} style={{ color: '#f59e0b' }} />
+              <span className="nav-btn-full">Leaderboard</span>
+              <span className="nav-btn-compact">Ranks</span>
+            </Link>
 
             {/* Admin Dashboard Link (Only visible if Admin) */}
             {user?.role === 'admin' && (
@@ -191,6 +204,28 @@ export default function Navbar({ user, onOpenAskModal, onLogout }: NavbarProps) 
                         {user.role === 'admin' ? 'Administrator' : 'Scholar'}
                       </span>
                     </div>
+
+                    {/* Solutions & Rankings link */}
+                    <Link
+                      href="/leaderboard"
+                      onClick={() => setIsProfileOpen(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        padding: '8px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--bg-subtle)',
+                        textDecoration: 'none',
+                        transition: 'background var(--transition-fast)'
+                      }}
+                    >
+                      <Trophy size={14} style={{ color: '#f59e0b' }} />
+                      <span>Solutions & Rankings</span>
+                    </Link>
 
                     {/* Sign out button */}
                     <button

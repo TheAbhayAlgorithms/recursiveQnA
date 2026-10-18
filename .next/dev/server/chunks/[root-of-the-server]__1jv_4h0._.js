@@ -265,6 +265,8 @@ __turbopack_context__.s([
     ()=>clearAuthCookies,
     "getCurrentUser",
     ()=>getCurrentUser,
+    "getPublicOrigin",
+    ()=>getPublicOrigin,
     "requireAuth",
     ()=>requireAuth,
     "setAuthCookies",
@@ -358,6 +360,30 @@ function clearAuthCookies(response) {
     };
     response.cookies.set('rqna_token', '', clearOptions);
     response.cookies.set('edu_token', '', clearOptions);
+}
+function getPublicOrigin(request) {
+    // 1. Explicit app URL if set in env
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || process.env.SITE_URL;
+    if (envUrl) return envUrl.replace(/\/$/, '');
+    // 2. Vercel deployment URL
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+        return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    }
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`;
+    }
+    // 3. Proxy headers (X-Forwarded-Host / X-Forwarded-Proto)
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    if (forwardedHost) {
+        return `${forwardedProto}://${forwardedHost}`;
+    }
+    // 4. Fallback to request URL origin
+    try {
+        return new URL(request.url).origin;
+    } catch  {
+        return 'http://localhost:3000';
+    }
 }
 }),
 "[project]/lib/db.ts [app-route] (ecmascript)", ((__turbopack_context__) => {
