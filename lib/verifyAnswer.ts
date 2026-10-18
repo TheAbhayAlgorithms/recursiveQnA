@@ -121,7 +121,8 @@ export async function verifyWithGemini(
     return 'unsure';
   }
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const fallbackModel = primaryModel === 'gemini-3.5-flash' ? 'gemini-3.7-flash' : 'gemini-3.5-flash';
   const ai = new GoogleGenAI({ apiKey });
 
   const userPrompt = `<question>${questionText}</question>\n<submitted_answer>${answerText}</submitted_answer>`;
@@ -132,23 +133,23 @@ export async function verifyWithGemini(
     imagePart = await getImagePart(questionImageUrl);
   }
 
-  // Attempt 1
+  // Attempt 1 with primary model
   try {
-    return await callGeminiOnce(ai, modelName, userPrompt, imagePart, 20000);
+    return await callGeminiOnce(ai, primaryModel, userPrompt, imagePart, 20000);
   } catch (err1) {
-    console.warn('Gemini verification attempt 1 failed, retrying once...', err1);
-    // Attempt 2 (One Retry)
+    console.warn(`[Gemini Verify] Attempt 1 with ${primaryModel} failed, retrying with fallback ${fallbackModel}...`, err1);
+    // Attempt 2 with resilient fallback model
     try {
-      return await callGeminiOnce(ai, modelName, userPrompt, imagePart, 20000);
+      return await callGeminiOnce(ai, fallbackModel, userPrompt, imagePart, 20000);
     } catch (err2) {
-      console.error('Gemini verification attempt 2 (retry) also failed:', err2);
+      console.error(`[Gemini Verify] Attempt 2 with ${fallbackModel} also failed:`, err2);
       return 'unsure';
     }
   }
 }
 
 /**
- * Enforces verification rate limits and records attempts:
+ * Checks verification rate limits without incrementing:
  * - Max 5 verifications per user per question per hour
  * - Max 30 verifications per user per day
  * Returns { allowed: true } or { allowed: false, error: string }
@@ -158,9 +159,6 @@ export async function checkVerificationRateLimit(
   questionId: string
 ): Promise<{ allowed: boolean; error?: string }> {
   const now = Date.now();
-  const ONE_HOUR = 60 * 60 * 1000;
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-
   const questionKey = `verify_q:${userId}:${questionId}`;
   const dailyKey = `verify_day:${userId}`;
 
@@ -190,7 +188,33 @@ export async function checkVerificationRateLimit(
       };
     }
 
-    // 3. Increment or initialize per-question hourly counter
+    return { allowed: true };
+  } catch (err) {
+    console.error('Rate limit check error:', err);
+    return { allowed: true };
+  }
+}
+
+/**
+ * Records a successful, conclusive verification attempt.
+ * Increments hourly and daily counters.
+ */
+export async function recordVerificationAttempt(
+  userId: string,
+  questionId: string
+): Promise<void> {
+  const now = Date.now();
+  const ONE_HOUR = 60 * 60 * 1000;
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+
+  const questionKey = `verify_q:${userId}:${questionId}`;
+  const dailyKey = `verify_day:${userId}`;
+
+  try {
+    const qRecord = (await db
+      .prepare('SELECT count, reset_at FROM rate_limits WHERE key = ?')
+      .get(questionKey)) as { count: number; reset_at: number } | undefined;
+
     if (!qRecord || now >= qRecord.reset_at) {
       await db.prepare(`
         INSERT INTO rate_limits (key, count, reset_at, last_requested_at)
@@ -206,7 +230,10 @@ export async function checkVerificationRateLimit(
       `).run(now, questionKey);
     }
 
-    // 4. Increment or initialize daily counter
+    const dayRecord = (await db
+      .prepare('SELECT count, reset_at FROM rate_limits WHERE key = ?')
+      .get(dailyKey)) as { count: number; reset_at: number } | undefined;
+
     if (!dayRecord || now >= dayRecord.reset_at) {
       await db.prepare(`
         INSERT INTO rate_limits (key, count, reset_at, last_requested_at)
@@ -221,11 +248,7 @@ export async function checkVerificationRateLimit(
         UPDATE rate_limits SET count = count + 1, last_requested_at = ? WHERE key = ?
       `).run(now, dailyKey);
     }
-
-    return { allowed: true };
   } catch (err) {
-    console.error('Rate limit check error:', err);
-    // On unexpected rate limit query error, allow request but log
-    return { allowed: true };
+    console.error('Record verification attempt error:', err);
   }
 }

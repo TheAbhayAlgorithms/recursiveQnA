@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import db from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { verifyWithGemini, checkVerificationRateLimit, Verdict } from '@/lib/verifyAnswer';
+import {
+  verifyWithGemini,
+  checkVerificationRateLimit,
+  recordVerificationAttempt,
+  Verdict,
+} from '@/lib/verifyAnswer';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,6 +98,11 @@ export async function POST(request: Request) {
       answerText,
       question.image_url
     );
+
+    // Record rate limit attempt only if conclusive (don't penalize user for system errors or neutral results)
+    if (verdict === 'correct' || verdict === 'incorrect') {
+      await recordVerificationAttempt(user.id, solution.question_id);
+    }
 
     // 9. Store verdict in private answer_verifications table
     const verificationId = 'ver_' + crypto.randomUUID();
