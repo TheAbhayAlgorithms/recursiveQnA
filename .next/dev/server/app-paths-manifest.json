@@ -1,3 +1,4 @@
 {
-  "/api/verify-answer/route": "app/api/verify-answer/route.js"
+  "/api/verify-answer/route": "app/api/verify-answer/route.js",
+  "/page": "app/page.js"
 }

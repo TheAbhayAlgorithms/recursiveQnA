@@ -90,6 +90,7 @@ async function callGeminiOnce(
     clearTimeout(timeoutHandle);
 
     const text = (res as any)?.text ?? '{}';
+    console.log('[Gemini Verify] Raw response:', text);
     const parsed = JSON.parse(text);
     if (parsed && typeof parsed.verdict === 'string') {
       const v = parsed.verdict.toLowerCase().trim();
@@ -97,6 +98,7 @@ async function callGeminiOnce(
         return v as Verdict;
       }
     }
+    console.warn('[Gemini Verify] Non-conclusive verdict received:', text);
     return 'unsure';
   } finally {
     clearTimeout(timeoutHandle);
